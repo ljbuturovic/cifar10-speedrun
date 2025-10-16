@@ -4,7 +4,7 @@ This repository contains a script that trains a neural network to **94% accuracy
 
 | Script | Mean accuracy | Time |
 | :--- | :--- | :--- |
-| **`cifar10_speedrun.py`** | **94.01%** | **2.015s** |
+| **`cifar10_speedrun.py`** | **94.01%** | **1.99s** |
 | `airbench94_muon.py` | 94.01% | 2.59s |
 
 ## 🚀 Quickstart
