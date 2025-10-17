@@ -1,14 +1,11 @@
---- Starting Sequential Run 1 at Fri Sep 26 13:35:27 UTC 2025 ---
---- Starting Sequential Run 2 at Fri Sep 26 13:58:11 UTC 2025 ---
---- Starting Sequential Run 3 at Fri Sep 26 14:21:00 UTC 2025 ---
---- Starting Sequential Run 4 at Fri Sep 26 14:43:45 UTC 2025 ---
---- Starting Sequential Run 5 at Fri Sep 26 15:06:29 UTC 2025 ---
---- Starting Sequential Run 6 at Fri Sep 26 15:29:13 UTC 2025 ---
---- Starting Sequential Run 7 at Fri Sep 26 15:51:57 UTC 2025 ---
---- Starting Sequential Run 8 at Fri Sep 26 16:14:42 UTC 2025 ---
---- Starting Sequential Run 9 at Fri Sep 26 16:37:27 UTC 2025 ---
---- Starting Sequential Run 10 at Fri Sep 26 17:00:13 UTC 2025 ---
-Disabled persistence mode for GPU 00000000:00:04.0.
-All done.
-All done.
---- All 10 runs completed at Fri Sep 26 17:22:58 UTC 2025 ---
+--- Starting Sequential Run 1 at Thu Oct 16 22:43:27 UTC 2025 ---
+--- Starting Sequential Run 2 at Thu Oct 16 23:09:17 UTC 2025 ---
+--- Starting Sequential Run 3 at Thu Oct 16 23:33:28 UTC 2025 ---
+--- Starting Sequential Run 4 at Thu Oct 16 23:57:40 UTC 2025 ---
+--- Starting Sequential Run 5 at Fri Oct 17 00:21:53 UTC 2025 ---
+--- Starting Sequential Run 6 at Fri Oct 17 00:46:08 UTC 2025 ---
+--- Starting Sequential Run 7 at Fri Oct 17 01:10:18 UTC 2025 ---
+--- Starting Sequential Run 8 at Fri Oct 17 01:34:34 UTC 2025 ---
+--- Starting Sequential Run 9 at Fri Oct 17 01:58:38 UTC 2025 ---
+--- Starting Sequential Run 10 at Fri Oct 17 02:22:49 UTC 2025 ---
+--- All 10 runs completed at Fri Oct 17 02:47:06 UTC 2025 ---
