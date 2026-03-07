@@ -1,9 +1,11 @@
+#!/usr/bin/env python
 #############################################
 #                  Setup                    #
 #############################################
 
 import os
 import sys
+import argparse
 with open(sys.argv[0]) as f:
     code = f.read()
 import uuid
@@ -728,12 +730,15 @@ def main(run, model):
     return (val_acc, tta_val_acc, time_seconds)
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--runs", type=int, default=200)
+    args = parser.parse_args()
     model = CifarNet().cuda().to(memory_format=torch.channels_last)
     model.compile(mode="max-autotune")
     print_columns(logging_columns_list, is_head=True)
     main("warmup", model)
     results = []
-    for run in range(200):
+    for run in range(args.runs):
         torch.cuda.empty_cache()
         torch.cuda.synchronize()
         torch.cuda._sleep(int(6000000000))
@@ -748,5 +753,9 @@ if __name__ == "__main__":
     _, accs, times = zip(*results)
     accs = torch.tensor(accs)
     times = torch.tensor(times)
-    print("Accuracies: Mean: %.6f    Std: %.6f" % (accs.mean(), accs.std()))
-    print("Times (s):  Mean: %.6f    Std: %.6f" % (times.mean(), times.std()))
+    if args.runs == 1:
+        print("Accuracies: Mean: %.6f" % accs.mean())
+        print("Times (s):  Mean: %.6f" % times.mean())
+    else:
+        print("Accuracies: Mean: %.6f    Std: %.6f" % (accs.mean(), accs.std()))
+        print("Times (s):  Mean: %.6f    Std: %.6f" % (times.mean(), times.std()))
