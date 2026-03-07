@@ -298,10 +298,9 @@ def batch_crop(images, crop_size):
     return cropped_images
 
 class CifarLoader:
-    def __init__(self, path, train=True, batch_size=500, aug=None):
-        data_path = os.path.join(path, "train.pt" if train else "test.pt")
+    def __init__(self, data_path, train=True, batch_size=500, aug=None):
         if not os.path.exists(data_path):
-            dset = torchvision.datasets.CIFAR10(path, download=True, train=train)
+            dset = torchvision.datasets.CIFAR10(os.path.dirname(data_path), download=True, train=train)
             images = torch.tensor(dset.data)
             labels = torch.tensor(dset.targets)
             torch.save({"images": images, "labels": labels, "classes": dset.classes}, data_path)
@@ -587,14 +586,14 @@ def evaluate(model, loader, tta_level=0):
 #                Training                  #
 ############################################
 
-def main(run, model):
+def main(run, model, train_path, test_path):
     training_batch_size = 1536
     bias_lr = 0.0573
     head_lr = 0.5415
     wd = 1.0418e-06 * training_batch_size
-    test_loader = CifarLoader("cifar10", train=False, batch_size=2000)
+    test_loader = CifarLoader(test_path, train=False, batch_size=2000)
     train_loader = CifarLoader(
-        "cifar10",
+        train_path,
         train=True,
         batch_size=training_batch_size,
         aug={
@@ -731,18 +730,20 @@ def main(run, model):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--runs", type=int, default=200)
+    parser.add_argument("--train", required=True, help="Path to train.pt")
+    parser.add_argument("--test", required=True, help="Path to test.pt")
+    parser.add_argument("--runs", type=int, default=1)
     args = parser.parse_args()
     model = CifarNet().cuda().to(memory_format=torch.channels_last)
     model.compile(mode="max-autotune")
     print_columns(logging_columns_list, is_head=True)
-    main("warmup", model)
+    main("warmup", model, args.train, args.test)
     results = []
     for run in range(args.runs):
         torch.cuda.empty_cache()
         torch.cuda.synchronize()
         torch.cuda._sleep(int(6000000000))
-        val_acc, tta_val_acc, time_seconds = main(run + 1, model)
+        val_acc, tta_val_acc, time_seconds = main(run + 1, model, args.train, args.test)
         results.append((val_acc, tta_val_acc, time_seconds))
         accs_so_far = [a for _, a, _ in results]
         times_so_far = [t for _, _, t in results]
