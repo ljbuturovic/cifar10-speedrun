@@ -483,7 +483,7 @@ def print_columns(columns_list, is_head=False, is_final_entry=False):
     if is_head or is_final_entry:
         print("-"*len(print_string))
 
-logging_columns_list = ["run   ", "epoch", "train_acc", "val_acc", "tta_val_acc", "time_seconds"]
+logging_columns_list = ["run   ", "epoch", "train_acc", "val_acc", "val_auroc", "tta_val_acc", "time_seconds"]
 def print_training_details(variables, is_final_entry):
     formatted = []
     for col in logging_columns_list:
@@ -581,6 +581,24 @@ def infer(model, loader, tta_level=0):
 def evaluate(model, loader, tta_level=0):
     logits = infer(model, loader, tta_level)
     return (logits.argmax(1) == loader.labels).float().mean().item()
+
+def compute_auroc(logits, labels):
+    """Macro-averaged one-vs-rest AUROC using the Wilcoxon-Mann-Whitney statistic."""
+    probs = F.softmax(logits.float(), dim=1)
+    n_classes = probs.shape[1]
+    auroc_sum = 0.0
+    for c in range(n_classes):
+        scores = probs[:, c]
+        binary = (labels == c).float()
+        n_pos = binary.sum().item()
+        n_neg = len(binary) - n_pos
+        if n_pos == 0 or n_neg == 0:
+            continue
+        sorted_labels = binary[torch.argsort(scores, descending=True)]
+        ranks = torch.arange(1, len(sorted_labels) + 1, device=labels.device, dtype=torch.float)
+        rank_sum = (ranks * sorted_labels).sum().item()
+        auroc_sum += (rank_sum - n_pos * (n_pos + 1) / 2) / (n_pos * n_neg)
+    return auroc_sum / n_classes
 
 ############################################
 #                Training                  #
@@ -724,9 +742,11 @@ def main(run, model, train_path, test_path):
     stop_timer()
     epoch = "eval"
     train_acc = evaluate(model, train_loader, tta_level=0)
-    val_acc = evaluate(model, test_loader, tta_level=0)
+    val_logits = infer(model, test_loader, tta_level=0)
+    val_acc = (val_logits.argmax(1) == test_loader.labels).float().mean().item()
+    val_auroc = compute_auroc(val_logits, test_loader.labels)
     print_training_details(locals(), is_final_entry=True)
-    return (val_acc, tta_val_acc, time_seconds)
+    return (val_acc, val_auroc, tta_val_acc, time_seconds)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -743,20 +763,23 @@ if __name__ == "__main__":
         torch.cuda.empty_cache()
         torch.cuda.synchronize()
         torch.cuda._sleep(int(6000000000))
-        val_acc, tta_val_acc, time_seconds = main(run + 1, model, args.train, args.test)
-        results.append((val_acc, tta_val_acc, time_seconds))
-        accs_so_far = [a for _, a, _ in results]
-        times_so_far = [t for _, _, t in results]
+        val_acc, val_auroc, tta_val_acc, time_seconds = main(run + 1, model, args.train, args.test)
+        results.append((val_acc, val_auroc, tta_val_acc, time_seconds))
+        accs_so_far = [a for _, a, _, _ in results]
+        times_so_far = [t for _, _, _, t in results]
         print(
             f"Mean accuracy after {run + 1} runs: {sum(accs_so_far) / len(accs_so_far):.6f} | Mean time: {sum(times_so_far) / len(times_so_far):.6f}s", end='\r', flush=True
         )
     print()
-    _, accs, times = zip(*results)
+    _, aurocs, accs, times = zip(*results)
     accs = torch.tensor(accs)
+    aurocs = torch.tensor(aurocs)
     times = torch.tensor(times)
     if args.runs == 1:
         print("Accuracies: Mean: %.6f" % accs.mean())
+        print("AUROC:      Mean: %.6f" % aurocs.mean())
         print("Times (s):  Mean: %.6f" % times.mean())
     else:
         print("Accuracies: Mean: %.6f    Std: %.6f" % (accs.mean(), accs.std()))
+        print("AUROC:      Mean: %.6f    Std: %.6f" % (aurocs.mean(), aurocs.std()))
         print("Times (s):  Mean: %.6f    Std: %.6f" % (times.mean(), times.std()))
