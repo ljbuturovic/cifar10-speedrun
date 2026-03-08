@@ -594,7 +594,7 @@ def compute_auroc(logits, labels):
         n_neg = len(binary) - n_pos
         if n_pos == 0 or n_neg == 0:
             continue
-        sorted_labels = binary[torch.argsort(scores, descending=True)]
+        sorted_labels = binary[torch.argsort(scores, descending=False)]
         ranks = torch.arange(1, len(sorted_labels) + 1, device=labels.device, dtype=torch.float)
         rank_sum = (ranks * sorted_labels).sum().item()
         auroc_sum += (rank_sum - n_pos * (n_pos + 1) / 2) / (n_pos * n_neg)
